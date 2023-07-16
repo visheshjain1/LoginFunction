@@ -76,7 +76,7 @@ module.exports.loginUser = async (req, res) => {
     });
 
     console.log(info)
-    const otp = new Otp({ email: email, otp: OTP, password: '' });
+    const otp = new Otp({ email: email, otp: OTP, password: 'a' });
     const salt = await bcrypt.genSalt(10)
     //otp.password = await bcrypt.hash(password, salt)
     otp.otp = await bcrypt.hash(otp.otp, salt);
@@ -106,7 +106,7 @@ module.exports.verifyOtpLogin = async (req, res) => {
         });
         return res.status(200).send({
             message: "User LoggedIn Successfull!",
-            data: result
+            data: {}
         });
     } else {
         return res.status(400).send("Your OTP was wrong!")
