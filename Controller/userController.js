@@ -12,7 +12,10 @@ module.exports.signUp = async (req, res) => {
     const user = await User.findOne({
         email: req.body.email
     });
-    if (user) return res.status(400).send("User already registered!");
+    if (user) return res.status(400).send({
+        message: "User already registered!",
+        data: {}
+    })
     const OTP = otpGenerator.generate(6, {
         digits: true, upperCaseAlphabets: false, lowerCaseAlphabets: false, specialChars: false
     });
@@ -42,15 +45,24 @@ module.exports.signUp = async (req, res) => {
     otp.password = await bcrypt.hash(password, salt)
     otp.otp = await bcrypt.hash(otp.otp, salt);
     const result = await otp.save();
-    return res.status(200).send("Otp send successfully!");
+    return res.status(200).send({
+        message: "OTP Sent to registered mail",
+        data: {}
+    })
 }
 module.exports.loginUser = async (req, res) => {
     const user = await User.findOne({
         email: req.body.email
     });
-    if (!user) return res.status(400).send("User not registered!");
+    if (!user) return res.status(400).send({
+        message: "User Not Registered!",
+        data: {}
+    });
     const validPassword = await bcrypt.compare(req.body.password, user.password);
-    if (!validPassword) return res.status(400).send("Wrong Password!");
+    if (!validPassword) return res.status(400).send({
+        message: "Wrong Password!",
+        data: {}
+    });
 
     const OTP = otpGenerator.generate(6, {
         digits: true, upperCaseAlphabets: false, lowerCaseAlphabets: false, specialChars: false
