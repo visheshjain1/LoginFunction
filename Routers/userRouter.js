@@ -4,7 +4,7 @@ const { signUp, verifyOtp, loginUser, verifyOtpLogin } = require('../Controller/
 router.route('/signup')
     .post(signUp);
 router.route('/signup/verify')
-    .post(verifyOtp);
+    .post(verifyOtpSignup);
 router.route('/login').post(loginUser);
 router.route('/login/verify').post(verifyOtpLogin);
 

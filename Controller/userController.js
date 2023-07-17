@@ -7,7 +7,8 @@ const nodeMailer = require('nodemailer')
 const { User } = require('../Model/userModel');
 const { Otp } = require('../Model/otpModel');
 
-
+//Signup 
+//Controller
 module.exports.signUp = async (req, res) => {
     const user = await User.findOne({
         email: req.body.email
@@ -16,6 +17,8 @@ module.exports.signUp = async (req, res) => {
         message: "User already registered!",
         data: {}
     })
+
+    //generating OTP of 6 digits
     const OTP = otpGenerator.generate(6, {
         digits: true, upperCaseAlphabets: false, lowerCaseAlphabets: false, specialChars: false
     });
@@ -23,17 +26,17 @@ module.exports.signUp = async (req, res) => {
     const password = req.body.password
     const html = `<h1>OTP Confirmation<h1>
                 <p>your OTP is: ${OTP}<p>`
-    const transporter = nodeMailer.createTransport({
+    const transporter = nodeMailer.createTransport({    //creating transporter using nodemailer
         host: 'smtp.gmail.com',
         port: 587,
         auth: {
-            user: 'jainvishesh004@gmail.com',
-            pass: 'yxfrtyqoknegrsuj'
+            user: process.env.email,
+            pass: process.env.pass
         }
     });
 
     const info = await transporter.sendMail({
-        from: 'jainvishesh004@gmail.com',
+        from: process.env.email,
         to: email,
         subject: 'testing',
         html: html
@@ -41,7 +44,7 @@ module.exports.signUp = async (req, res) => {
 
     console.log(info)
     const otp = new Otp({ email: email, otp: OTP, password: '' });
-    const salt = await bcrypt.genSalt(10)
+    const salt = await bcrypt.genSalt(10)  //generating salt for storing encrypted Data in DB for password and OTP
     otp.password = await bcrypt.hash(password, salt)
     otp.otp = await bcrypt.hash(otp.otp, salt);
     const result = await otp.save();
@@ -50,6 +53,9 @@ module.exports.signUp = async (req, res) => {
         data: {}
     })
 }
+
+//Login 
+//Controller
 module.exports.loginUser = async (req, res) => {
     const user = await User.findOne({
         email: req.body.email
@@ -71,7 +77,7 @@ module.exports.loginUser = async (req, res) => {
     const password = req.body.password
     const html = `<h1>OTP Confirmation<h1>
                 <p>your OTP is: ${OTP}<p>`
-    const transporter = nodeMailer.createTransport({
+    const transporter = nodeMailer.createTransport({   //creating transporter using nodemailer
         host: 'smtp.gmail.com',
         port: 587,
         auth: {
@@ -87,13 +93,11 @@ module.exports.loginUser = async (req, res) => {
         html: html
     });
 
-    console.log(info)
+    console.log(info)    //logging json object of mail
     const otp = new Otp({ email: email, otp: OTP, password: 'a' });
-    const salt = await bcrypt.genSalt(10)
-    //otp.password = await bcrypt.hash(password, salt)
+    const salt = await bcrypt.genSalt(10)   //generating salt for hashing OTP ans storing in DB
     otp.otp = await bcrypt.hash(otp.otp, salt);
     const result = await otp.save();
-    //return res.status(200).send("Otp send successfully!");
 
     return res.status(200).send({
         message: "OTP Sent to registered mail",
@@ -101,6 +105,9 @@ module.exports.loginUser = async (req, res) => {
     });
 }
 
+
+//LoginOTPVERIFICATION 
+//Controller
 module.exports.verifyOtpLogin = async (req, res) => {
     const otpHolder = await Otp.find({
         email: req.body.email
@@ -109,8 +116,7 @@ module.exports.verifyOtpLogin = async (req, res) => {
     console.log(otpHolder)
     if (otpHolder.length === 0) return res.status(400).send("You use an Expired OTP!");
     const rightOtpFind = otpHolder[otpHolder.length - 1];
-    //const rightPassword = rightOtpFind.password;
-    const validUser = await bcrypt.compare(req.body.otp, rightOtpFind.otp);
+    const validUser = await bcrypt.compare(req.body.otp, rightOtpFind.otp);  //checking stored encrypted value to otp received
 
     if (validUser) {
         const OTPDelete = await Otp.deleteMany({
@@ -126,8 +132,9 @@ module.exports.verifyOtpLogin = async (req, res) => {
 }
 
 
-
-module.exports.verifyOtp = async (req, res) => {
+//SignupOTPVERIFICATION 
+//Controller
+module.exports.verifyOtpSignup = async (req, res) => {
     const otpHolder = await Otp.find({
         email: req.body.email
     });
@@ -136,7 +143,7 @@ module.exports.verifyOtp = async (req, res) => {
     if (otpHolder.length === 0) return res.status(400).send("You use an Expired OTP!");
     const rightOtpFind = otpHolder[otpHolder.length - 1];
     const rightPassword = rightOtpFind.password;
-    const validUser = await bcrypt.compare(req.body.otp, rightOtpFind.otp);
+    const validUser = await bcrypt.compare(req.body.otp, rightOtpFind.otp); //checking stored encrypted value to otp received
 
     if (rightOtpFind.email === req.body.email && validUser) {
         const user = new User(_.pick(req.body, ["email"]));
